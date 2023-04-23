@@ -22,7 +22,7 @@
         targets.wasm32-unknown-unknown.latest.rust-std
       ];
     in {
-      devShell = pkgs.mkShell {
+      devShells.default = pkgs.mkShell {
         shellHook = ''
           export PATH+=:~/.cargo/bin
           export LD_LIBRARY_PATH="${pkgs.stdenv.cc.cc.lib}/lib64:${pkgs.zlib}/lib:$LD_LIBRARY_PATH"
