@@ -1,5 +1,5 @@
-use serde_json::json;
-use worker::{FormEntry, Request, Response, RouteContext, console_error, console_log};
+
+use worker::{Request, Response, RouteContext, console_error};
 
 use crate::{
     db::{

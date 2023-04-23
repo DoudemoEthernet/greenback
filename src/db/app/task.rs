@@ -1,10 +1,10 @@
 use std::{str::FromStr, sync::Arc};
 
 use async_trait::async_trait;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize};
 use time::OffsetDateTime;
 use uuid::Uuid;
-use worker::{console_log, console_warn, Database};
+use worker::{Database};
 
 use crate::db::{
     entity::{

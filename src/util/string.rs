@@ -1,4 +1,4 @@
-use std::{cell::RefCell, error::Error, fmt::Display};
+use std::{error::Error, fmt::Display};
 
 #[derive(Debug)]
 pub struct TryFromStringError {
