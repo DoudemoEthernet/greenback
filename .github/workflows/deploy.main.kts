@@ -15,11 +15,9 @@ import io.github.typesafegithub.workflows.yaml.toYaml
 val CF_ACCOUNT_ID by Contexts.secrets
 val CF_API_KEY by Contexts.secrets
 
-val targetBranches = listOf("main")
-
 val workflow = workflow(
     name = "deploy",
-    on = listOf(Push(branches = targetBranches), PullRequest(branches = targetBranches)),
+    on = listOf(Push(branches = listOf("main"))),
     sourceFile = __FILE__.toPath()
 ) {
     val lintAndTest = job(
@@ -51,7 +49,7 @@ val workflow = workflow(
     job(
         id = "deploy",
         runsOn = RunnerType.UbuntuLatest,
-        needs = listOf(lintAndTest)
+        needs = listOf(lintAndTest),
     ) {
         uses(name = "Check out", action = CheckoutV3())
         uses(
