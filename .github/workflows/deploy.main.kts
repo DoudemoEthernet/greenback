@@ -42,7 +42,7 @@ val workflow = workflow(
         )
         run(
             name = "Run test",
-            command = "nix develop --command bash -c \"cargo test\""
+            command = "nix develop --command bash -c \"cargo clippy && cargo test\""
         )
     }
 
