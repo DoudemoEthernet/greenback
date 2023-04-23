@@ -66,7 +66,7 @@ val workflow = workflow(
         )
         run(
             name = "Deploy",
-            command = "nix develop --command bash -c \"CLOUDFLARE_API_TOKEN=${expr { CF_API_KEY }} && wrangler publish\""
+            command = "CLOUDFLARE_API_TOKEN=${expr { CF_API_KEY }} && nix develop --command bash -c \"wrangler publish\""
         )
     }
 }

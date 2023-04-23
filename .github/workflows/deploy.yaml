@@ -56,5 +56,5 @@ jobs:
         github_access_token: ${{ secrets.GITHUB_TOKEN }}
     - id: step-2
       name: Deploy
-      run: nix develop --command bash -c "CLOUDFLARE_API_TOKEN=${{ secrets.CF_API_KEY }} && wrangler publish"
+      run: CLOUDFLARE_API_TOKEN=${{ secrets.CF_API_KEY }} && nix develop --command bash -c "wrangler publish"
 
