@@ -1,4 +1,4 @@
-use db::{app::task::D1TaskDatabase, service::task::TaskService};
+use db::{app::task::D1TaskDatabase, service::Service};
 use router::{delete_task, get_task, patch_task, post_task};
 use worker::*;
 
@@ -16,9 +16,9 @@ fn log_request(req: &Request) {
     );
 }
 
-fn get_service(env: &Env) -> Result<TaskService<D1TaskDatabase>> {
+fn get_service(env: &Env) -> Result<Service<D1TaskDatabase>> {
     env.d1("DB")
-        .map(|db| TaskService::new(D1TaskDatabase::new(db)))
+        .map(|db| Service::new(D1TaskDatabase::new(db)))
 }
 
 #[event(fetch)]

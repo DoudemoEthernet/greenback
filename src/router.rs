@@ -6,14 +6,14 @@ use crate::{
         entity::{account::AccountId, task::TaskId},
         error::DatabaseError,
         repository::task::TaskRepository,
-        service::task::TaskService,
+        service::Service,
     },
     util::task::{PatchTask, PostTask, ResponseTask},
 };
 
 pub async fn post_task<Repository: TaskRepository>(
     mut request: Request,
-    service: &TaskService<Repository>,
+    service: &Service<Repository>,
 ) -> worker::Result<Response> {
     let data: PostTask = request.json().await?;
     service.create_task(data).await.map_or_else(
@@ -30,7 +30,7 @@ pub async fn post_task<Repository: TaskRepository>(
 }
 
 pub async fn get_task<Repository: TaskRepository>(
-    service: &TaskService<Repository>,
+    service: &Service<Repository>,
 ) -> worker::Result<Response> {
     service
         .get_all_tasks(AccountId::new(0))
@@ -64,7 +64,7 @@ pub async fn get_task<Repository: TaskRepository>(
 
 pub async fn patch_task<Repository: TaskRepository>(
     mut request: Request,
-    service: &TaskService<Repository>,
+    service: &Service<Repository>,
 ) -> worker::Result<Response> {
     let data: PatchTask = request.json().await?;
     service.update_task(data).await.map_or_else(
@@ -81,7 +81,7 @@ pub async fn patch_task<Repository: TaskRepository>(
 
 pub async fn delete_task<Repository: TaskRepository>(
     context: &RouteContext<()>,
-    service: &TaskService<Repository>,
+    service: &Service<Repository>,
 ) -> worker::Result<Response> {
     if let Some(id) = context.param("id") {
         return match TaskId::try_from(id.as_str()) {
