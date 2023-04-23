@@ -117,14 +117,8 @@ impl TaskRepository for D1TaskDatabase {
             .all()
             .await
             .and_then(|r| {
-                console_log!("result");
-                let result = r.results::<InternalData>();
-                console_log!("{:?}", result);
-                result.map(|i| {
-                    i.iter()
-                        .map(|data| data.to_task())
-                        .collect::<Vec<Task>>()
-                })
+                r.results::<InternalData>()
+                    .map(|i| i.iter().map(|data| data.to_task()).collect::<Vec<Task>>())
             })
             .map_err(DatabaseError::TransactionError)
     }
