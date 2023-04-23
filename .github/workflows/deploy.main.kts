@@ -12,7 +12,6 @@ import io.github.typesafegithub.workflows.dsl.expressions.expr
 import io.github.typesafegithub.workflows.dsl.workflow
 import io.github.typesafegithub.workflows.yaml.toYaml
 
-val CF_ACCOUNT_ID by Contexts.secrets
 val CF_API_KEY by Contexts.secrets
 
 val targetBranches = listOf("main")
@@ -43,7 +42,7 @@ val workflow = workflow(
             )
         )
         run(
-            name = "run test",
+            name = "Run test",
             command = "nix develop --command bash -c \"cargo test\""
         )
     }
@@ -66,8 +65,8 @@ val workflow = workflow(
             )
         )
         run(
-            name = "run test",
-            command = "nix develop --command bash -c \"CF_ACCOUNT_ID=${expr { CF_ACCOUNT_ID }} && CF_API_KEY=${expr { CF_API_KEY }} && wrangler publish\""
+            name = "Deploy",
+            command = "nix develop --command bash -c \"CLOUDFLARE_API_TOKEN=${expr { CF_API_KEY }} && wrangler publish\""
         )
     }
 }

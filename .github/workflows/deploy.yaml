@@ -38,7 +38,7 @@ jobs:
       with:
         github_access_token: ${{ secrets.GITHUB_TOKEN }}
     - id: step-3
-      name: run test
+      name: Run test
       run: nix develop --command bash -c "cargo test"
   deploy:
     runs-on: ubuntu-latest
@@ -55,6 +55,6 @@ jobs:
       with:
         github_access_token: ${{ secrets.GITHUB_TOKEN }}
     - id: step-2
-      name: run test
-      run: nix develop --command bash -c "CF_ACCOUNT_ID=${{ secrets.CF_ACCOUNT_ID }} && CF_API_KEY=${{ secrets.CF_API_KEY }} && wrangler publish"
+      name: Deploy
+      run: nix develop --command bash -c "CLOUDFLARE_API_TOKEN=${{ secrets.CF_API_KEY }} && wrangler publish"
 
