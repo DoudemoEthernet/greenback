@@ -1,3 +1,4 @@
+# Created with reference to https://github.com/modrinth/sisyphus/blob/master/flake.nix
 {
   description = "Greenback Workers";
 
