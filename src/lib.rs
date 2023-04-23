@@ -5,7 +5,6 @@ use worker::*;
 mod db;
 pub mod router;
 pub mod util;
-mod utils;
 
 fn log_request(req: &Request) {
     console_log!(
@@ -27,7 +26,7 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
     log_request(&req);
 
     // Optionally, get more helpful error messages written to the console in the case of a panic.
-    utils::set_panic_hook();
+    util::hooks::set_panic_hook();
 
     // Optionally, use the Router to handle matching endpoints, use ":name" placeholders, or "*name"
     // catch-alls to match on specific patterns. Alternatively, use `Router::with_data(D)` to
