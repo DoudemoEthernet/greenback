@@ -22,21 +22,21 @@ val workflow = workflow(
     on = listOf(Push(branches = targetBranches), PullRequest(branches = targetBranches)),
     sourceFile = __FILE__.toPath()
 ) {
-    job(
+    val lintAndTest = job(
         id = "lint-and-test",
         runsOn = RunnerType.UbuntuLatest,
     ) {
         uses(name = "Check out", action = CheckoutV3())
         uses(
             name = "Run cargo deny",
-            action = CustomAction(actionOwner = "EmbarkStudios", actionName = "cargo-deny-action", actionVersion = "1")
+            action = CustomAction(actionOwner = "EmbarkStudios", actionName = "cargo-deny-action", actionVersion = "v1")
         )
         uses(
             name = "Install nix",
             action = CustomAction(
                 actionOwner = "cachix",
                 actionName = "install-nix-action",
-                actionVersion = "20",
+                actionVersion = "v20",
                 inputs = mapOf(
                     "github_access_token" to expr { secrets.GITHUB_TOKEN }
                 )
@@ -50,7 +50,8 @@ val workflow = workflow(
 
     job(
         id = "deploy",
-        runsOn = RunnerType.UbuntuLatest
+        runsOn = RunnerType.UbuntuLatest,
+        needs = listOf(lintAndTest)
     ) {
         uses(name = "Check out", action = CheckoutV3())
         uses(
@@ -58,7 +59,7 @@ val workflow = workflow(
             action = CustomAction(
                 actionOwner = "cachix",
                 actionName = "install-nix-action",
-                actionVersion = "20",
+                actionVersion = "v20",
                 inputs = mapOf(
                     "github_access_token" to expr { secrets.GITHUB_TOKEN }
                 )
