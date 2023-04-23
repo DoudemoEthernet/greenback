@@ -1,5 +1,5 @@
 {
-  description = "Modrinth Workers";
+  description = "Greenback Workers";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
