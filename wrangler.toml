@@ -1,4 +1,4 @@
-name = "test"
+name = "greenback"
 main = "build/worker/shim.mjs"
 compatibility_date = "2023-04-19"
 
