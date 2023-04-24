@@ -1,5 +1,4 @@
-
-use worker::{Request, Response, RouteContext, console_error};
+use worker::{console_error, Request, Response, RouteContext};
 
 use crate::{
     db::{
