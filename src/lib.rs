@@ -17,8 +17,7 @@ fn log_request(req: &Request) {
 }
 
 fn get_service(env: &Env) -> Result<Service<D1TaskDatabase>> {
-    env.d1("DB")
-        .map(|db| Service::new(D1TaskDatabase::new(db)))
+    env.d1("DB").map(|db| Service::new(D1TaskDatabase::new(db)))
 }
 
 #[event(fetch)]

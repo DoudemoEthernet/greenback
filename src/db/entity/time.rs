@@ -21,7 +21,9 @@ impl TryFrom<String> for CreatedAt {
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
         let unix_timestamp = value.parse::<i64>()?;
-        Ok(CreatedAt::new(OffsetDateTime::from_unix_timestamp(unix_timestamp)?))
+        Ok(CreatedAt::new(OffsetDateTime::from_unix_timestamp(
+            unix_timestamp,
+        )?))
     }
 }
 

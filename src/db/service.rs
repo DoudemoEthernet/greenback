@@ -1,8 +1,18 @@
-use crate::{db::{repository::task::TaskRepository, error::DatabaseError, entity::{account::AccountId, task::{TaskId, Task}}}, util::task::{PostTask, PatchTask}};
+use crate::{
+    db::{
+        entity::{
+            account::AccountId,
+            task::{Task, TaskId},
+        },
+        error::DatabaseError,
+        repository::task::TaskRepository,
+    },
+    util::task::{PatchTask, PostTask},
+};
 
 #[derive(Debug, Clone)]
 pub struct Service<TRepository: TaskRepository> {
-    task_repository: TRepository
+    task_repository: TRepository,
 }
 
 impl<TRepository> Service<TRepository>
@@ -11,18 +21,22 @@ where
 {
     pub fn new(t_repository: TRepository) -> Self {
         Self {
-            task_repository: t_repository
+            task_repository: t_repository,
         }
     }
 
     pub async fn create_task(&self, create: PostTask) -> Result<(), DatabaseError> {
-        self.task_repository.create(&create.create_task(AccountId::new(0))).await
+        self.task_repository
+            .create(&create.create_task(AccountId::new(0)))
+            .await
     }
-
 
     pub async fn update_task(&self, update: PatchTask) -> Result<(), DatabaseError> {
         let original = self.task_repository.get_from_id(&update.id()).await?;
-        let task = update.create_task(original.account().to_owned(), original.created_at().to_owned());
+        let task = update.create_task(
+            original.account().to_owned(),
+            original.created_at().to_owned(),
+        );
         self.task_repository.update(&task).await
     }
 
