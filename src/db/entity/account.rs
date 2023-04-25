@@ -90,4 +90,16 @@ impl Credential {
             password: Password::new(password.into())
         }
     }
+
+    pub fn account_id(&self) -> AccountId {
+        self.account_id
+    }
+
+    pub fn username(&self) -> Username {
+        self.username
+    }
+
+    pub fn password(&self) -> Password {
+        self.password
+    }
 }
