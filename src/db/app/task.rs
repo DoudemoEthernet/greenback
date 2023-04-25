@@ -15,6 +15,8 @@ use crate::db::{
     repository::task::TaskRepository,
 };
 
+use super::DatabaseWrapper;
+
 pub struct D1TaskDatabase {
     pub db: DatabaseWrapper,
 }
@@ -22,13 +24,10 @@ pub struct D1TaskDatabase {
 impl D1TaskDatabase {
     pub fn new(database: Database) -> Self {
         Self {
-            db: DatabaseWrapper(Arc::new(database)),
+            db: DatabaseWrapper::new(database),
         }
     }
 }
-
-#[derive(Clone)]
-pub struct DatabaseWrapper(Arc<Database>);
 
 #[derive(Debug, Deserialize)]
 struct InternalData {
