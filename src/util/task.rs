@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 
 use crate::db::entity::{
-    account::AccountId,
+    account::Username,
     task::{Description, Diffuculty, Task, TaskId, Title},
     time::CreatedAt,
 };
@@ -15,10 +15,10 @@ pub struct PostTask {
 }
 
 impl PostTask {
-    pub fn create_task(&self, account_id: AccountId) -> Task {
+    pub fn create_task(&self, username: Username) -> Task {
         Task::new(
             TaskId::default(),
-            account_id,
+            username,
             self.title.to_owned(),
             self.description.to_owned(),
             self.difficulty,
@@ -36,10 +36,10 @@ pub struct PatchTask {
 }
 
 impl PatchTask {
-    pub fn create_task(&self, account_id: AccountId, created_at: CreatedAt) -> Task {
+    pub fn create_task(&self, username: Username, created_at: CreatedAt) -> Task {
         Task::new(
             self.id,
-            account_id,
+            username,
             self.title.to_owned(),
             self.description.to_owned(),
             self.difficulty,

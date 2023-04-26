@@ -1,14 +1,13 @@
 use crate::{
     db::{
-        entity::{
-            account::AccountId,
-            task::{Task, TaskId},
-        },
+        entity::task::{Task, TaskId},
         error::DatabaseError,
         repository::task::TaskRepository,
     },
     util::task::{PatchTask, PostTask},
 };
+
+use super::entity::account::Username;
 
 #[derive(Debug, Clone)]
 pub struct Service<TRepository: TaskRepository> {
@@ -27,14 +26,14 @@ where
 
     pub async fn create_task(&self, create: PostTask) -> Result<(), DatabaseError> {
         self.task_repository
-            .create(&create.create_task(AccountId::new(0)))
+            .create(&create.create_task(Username::new("dummy-user".to_string())))
             .await
     }
 
     pub async fn update_task(&self, update: PatchTask) -> Result<(), DatabaseError> {
         let original = self.task_repository.get_from_id(&update.id()).await?;
         let task = update.create_task(
-            original.account().to_owned(),
+            original.username().to_owned(),
             original.created_at().to_owned(),
         );
         self.task_repository.update(&task).await
@@ -44,7 +43,7 @@ where
         self.task_repository.delete(&task_id).await
     }
 
-    pub async fn get_all_tasks(&self, account_id: AccountId) -> Result<Vec<Task>, DatabaseError> {
-        self.task_repository.get_from_account(&account_id).await
+    pub async fn get_all_tasks(&self, username: Username) -> Result<Vec<Task>, DatabaseError> {
+        self.task_repository.get_from_account(&username).await
     }
 }

@@ -2,7 +2,7 @@ use worker::{console_error, Request, Response, RouteContext};
 
 use crate::{
     db::{
-        entity::{account::AccountId, task::TaskId},
+        entity::{account::Username, task::TaskId},
         error::DatabaseError,
         repository::task::TaskRepository,
         service::Service,
@@ -32,7 +32,7 @@ pub async fn get_task<Repository: TaskRepository>(
     service: &Service<Repository>,
 ) -> worker::Result<Response> {
     service
-        .get_all_tasks(AccountId::new(0))
+        .get_all_tasks(Username::new("dummy-user".to_string()))
         .await
         .map_err(|e| match e {
             DatabaseError::NotFound(target) => {
