@@ -52,6 +52,6 @@ impl CredentialRepository for D1AccountDatabase {
         Ok(())
     }
 
-    async fn get(&self, name: &Username) -> Result<Credential, DatabaseError> {}
+    async fn get(&self, username: &Username) -> Result<Credential, DatabaseError> {}
     async fn delete(&self, username: &Username) -> Result<(), DatabaseError> {}
 }
