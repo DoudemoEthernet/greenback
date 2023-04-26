@@ -8,6 +8,6 @@ use crate::db::{
 #[async_trait(?Send)]
 pub trait CredentialRepository {
     async fn create(&self, create: &Credential) -> Result<(), DatabaseError>;
-    async fn get_from_name(&self, name: &Username) -> Result<Credential, DatabaseError>;
+    async fn get(&self, username: &Username) -> Result<Credential, DatabaseError>;
     async fn delete(&self, id: &Username) -> Result<(), DatabaseError>;
 }
