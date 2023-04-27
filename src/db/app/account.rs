@@ -1,16 +1,16 @@
 use async_trait::async_trait;
 use serde::Deserialize;
-use worker::{worker_sys::D1Result, D1Result, Database};
+use worker::Database;
 
 use crate::db::{
-    entity::account::{AccountId, Credential, Username},
+    entity::account::{Credential, Username},
     error::DatabaseError,
     repository::account::CredentialRepository,
 };
 
 use super::DatabaseWrapper;
 
-struct D1AccountDatabase {
+pub struct D1AccountDatabase {
     pub db: DatabaseWrapper,
 }
 
@@ -29,8 +29,8 @@ struct InternalData {
 }
 
 impl InternalData {
-    fn to_credential(self) -> Credential {
-        Credential::new(self.username, self.password)
+    fn to_credential(&self) -> Credential {
+        Credential::new(self.username.to_owned(), self.password.to_owned())
     }
 }
 
@@ -52,6 +52,33 @@ impl CredentialRepository for D1AccountDatabase {
         Ok(())
     }
 
-    async fn get(&self, username: &Username) -> Result<Credential, DatabaseError> {}
-    async fn delete(&self, username: &Username) -> Result<(), DatabaseError> {}
+    async fn get(&self, username: &Username) -> Result<Credential, DatabaseError> {
+        let query = "SELECT * FROM credentials WHERE username = ?;";
+        let queue = self
+            .db
+            .0
+            .prepare(query)
+            .bind(&[username.as_ref().into()])
+            .map_err(DatabaseError::TransactionError)?;
+        let result = queue
+            .first::<InternalData>(None)
+            .await
+            .map_err(DatabaseError::TransactionError)?;
+        match result {
+            Some(internal) => Ok(internal.to_credential()),
+            None => Err(DatabaseError::NotFound("credential".to_string())),
+        }
+    }
+
+    async fn delete(&self, username: &Username) -> Result<(), DatabaseError> {
+        let query = "DELETE FROM credentials WHERE username = ?;";
+        let queue = self
+            .db
+            .0
+            .prepare(query)
+            .bind(&[username.as_ref().into()])
+            .map_err(DatabaseError::TransactionError)?;
+        queue.run().await.map_err(DatabaseError::TransactionError)?;
+        Ok(())
+    }
 }

@@ -2,17 +2,20 @@ use worker::{console_error, Request, Response, RouteContext};
 
 use crate::{
     db::{
-        entity::{account::Username, task::TaskId},
+        entity::{
+            account::{Credential, Username},
+            task::TaskId,
+        },
         error::DatabaseError,
-        repository::task::TaskRepository,
+        repository::{account::CredentialRepository, task::TaskRepository},
         service::Service,
     },
     util::task::{PatchTask, PostTask, ResponseTask},
 };
 
-pub async fn post_task<Repository: TaskRepository>(
+pub async fn post_task<TRepository: TaskRepository, CRepository: CredentialRepository>(
     mut request: Request,
-    service: &Service<Repository>,
+    service: &Service<TRepository, CRepository>,
 ) -> worker::Result<Response> {
     let data: PostTask = request.json().await?;
     service.create_task(data).await.map_or_else(
@@ -28,8 +31,8 @@ pub async fn post_task<Repository: TaskRepository>(
     )
 }
 
-pub async fn get_task<Repository: TaskRepository>(
-    service: &Service<Repository>,
+pub async fn get_task<TRepository: TaskRepository, CRepository: CredentialRepository>(
+    service: &Service<TRepository, CRepository>,
 ) -> worker::Result<Response> {
     service
         .get_all_tasks(Username::new("dummy-user".to_string()))
@@ -61,9 +64,9 @@ pub async fn get_task<Repository: TaskRepository>(
         .map_or_else(|e| e, |r| r)
 }
 
-pub async fn patch_task<Repository: TaskRepository>(
+pub async fn patch_task<TRepository: TaskRepository, CRepository: CredentialRepository>(
     mut request: Request,
-    service: &Service<Repository>,
+    service: &Service<TRepository, CRepository>,
 ) -> worker::Result<Response> {
     let data: PatchTask = request.json().await?;
     service.update_task(data).await.map_or_else(
@@ -78,9 +81,9 @@ pub async fn patch_task<Repository: TaskRepository>(
     )
 }
 
-pub async fn delete_task<Repository: TaskRepository>(
+pub async fn delete_task<TRepository: TaskRepository, CRepository: CredentialRepository>(
     context: &RouteContext<()>,
-    service: &Service<Repository>,
+    service: &Service<TRepository, CRepository>,
 ) -> worker::Result<Response> {
     if let Some(id) = context.param("id") {
         return match TaskId::try_from(id.as_str()) {
@@ -102,4 +105,48 @@ pub async fn delete_task<Repository: TaskRepository>(
         };
     };
     Response::error("bad request", 400)
+}
+
+pub async fn create_account<TRepository: TaskRepository, CRepository: CredentialRepository>(
+    mut request: Request,
+    service: &Service<TRepository, CRepository>,
+) -> worker::Result<Response> {
+    let data: Credential = request.json().await?;
+    service.create_credential(data).await.map_or_else(
+        |e| match e {
+            DatabaseError::TransactionError(e) => {
+                console_error!("failed to create credential: {e}");
+                Response::error("Internal error", 500)
+            }
+            _ => Response::error("Unknown error", 500),
+        },
+        |_| Response::ok(""),
+    )
+}
+
+pub async fn login<TRepository: TaskRepository, CRepository: CredentialRepository>(
+    mut request: Request,
+    service: &Service<TRepository, CRepository>,
+) -> worker::Result<Response> {
+    let data: Credential = request.json().await?;
+    service
+        .get_credential(data.username())
+        .await
+        .map(|credential| {
+            if credential.password() == data.password() {
+                Response::ok("")
+            } else {
+                Response::error("Bad request", 400)
+            }
+        })
+        .map_or_else(
+            |e| match e {
+                DatabaseError::TransactionError(e) => {
+                    console_error!("failed to get credential: {e}");
+                    Response::error("Internal error", 500)
+                }
+                DatabaseError::NotFound(_) => Response::error("not found", 404),
+            },
+            |r| r,
+        )
 }

@@ -2,9 +2,8 @@ use std::sync::Arc;
 
 use worker::Database;
 
-pub mod task;
 pub mod account;
-
+pub mod task;
 
 #[derive(Clone)]
 pub struct DatabaseWrapper(Arc<Database>);

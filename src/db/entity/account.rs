@@ -57,10 +57,10 @@ impl Credential {
     }
 
     pub fn username(&self) -> Username {
-        self.username
+        self.username.to_owned()
     }
 
     pub fn password(&self) -> Password {
-        self.password
+        self.password.to_owned()
     }
 }

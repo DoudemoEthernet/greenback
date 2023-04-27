@@ -40,12 +40,12 @@ struct InternalData {
 }
 
 impl InternalData {
-    fn to_task(self) -> Task {
+    fn to_task(&self) -> Task {
         Task::new(
             Uuid::from_str(&self.id).unwrap(),
-            self.username,
-            self.title,
-            self.description,
+            self.username.to_owned(),
+            self.title.to_owned(),
+            self.description.to_owned(),
             self.difficulty as i8,
             OffsetDateTime::from_unix_timestamp(self.created_at).unwrap(),
         )

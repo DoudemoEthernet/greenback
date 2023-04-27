@@ -7,20 +7,26 @@ use crate::{
     util::task::{PatchTask, PostTask},
 };
 
-use super::entity::account::Username;
+use super::{
+    entity::account::{Credential, Username},
+    repository::account::CredentialRepository,
+};
 
 #[derive(Debug, Clone)]
-pub struct Service<TRepository: TaskRepository> {
+pub struct Service<TRepository: TaskRepository, ARepository: CredentialRepository> {
     task_repository: TRepository,
+    credential_repository: ARepository,
 }
 
-impl<TRepository> Service<TRepository>
+impl<TRepository, ARepository> Service<TRepository, ARepository>
 where
     TRepository: TaskRepository,
+    ARepository: CredentialRepository,
 {
-    pub fn new(t_repository: TRepository) -> Self {
+    pub fn new(t_repository: TRepository, c_repostitory: ARepository) -> Self {
         Self {
             task_repository: t_repository,
+            credential_repository: c_repostitory,
         }
     }
 
@@ -45,5 +51,17 @@ where
 
     pub async fn get_all_tasks(&self, username: Username) -> Result<Vec<Task>, DatabaseError> {
         self.task_repository.get_from_account(&username).await
+    }
+
+    pub async fn create_credential(&self, create: Credential) -> Result<(), DatabaseError> {
+        self.credential_repository.create(&create).await
+    }
+
+    pub async fn get_credential(&self, username: Username) -> Result<Credential, DatabaseError> {
+        self.credential_repository.get(&username).await
+    }
+
+    pub async fn delete_credenatial(&self, username: Username) -> Result<(), DatabaseError> {
+        self.credential_repository.delete(&username).await
     }
 }
