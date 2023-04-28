@@ -2,7 +2,7 @@ use db::{
     app::{account::D1AccountDatabase, task::D1TaskDatabase},
     service::Service,
 };
-use router::{delete_task, get_task, patch_task, post_task, create_account, login};
+use router::{create_account, delete_task, get_task, login, patch_task, post_task};
 use worker::*;
 
 mod db;
@@ -47,16 +47,16 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
     router
         .get("/", |_, _| Response::ok("Hello from Workers!"))
         .post_async("/task", |req, ctx| async move {
-            post_task(req, &get_service(&ctx.env)?).await
+            post_task(req, &get_service(&ctx.env)?, &get_token_suger(&ctx)?).await
         })
-        .get_async("/task", |_, ctx| async move {
-            get_task(&get_service(&ctx.env)?).await
+        .get_async("/task", |req, ctx| async move {
+            get_task(req, &get_service(&ctx.env)?, &get_token_suger(&ctx)?).await
         })
         .patch_async("/task", |req, ctx| async move {
-            patch_task(req, &get_service(&ctx.env)?).await
+            patch_task(req, &get_service(&ctx.env)?, &get_token_suger(&ctx)?).await
         })
-        .delete_async("/task/:id", |_, ctx| async move {
-            delete_task(&ctx, &get_service(&ctx.env)?).await
+        .delete_async("/task/:id", |req, ctx| async move {
+            delete_task(req, &ctx, &get_service(&ctx.env)?, &get_token_suger(&ctx)?).await
         })
         .post_async("/account/signup", |req, ctx| async move {
             create_account(req, &get_service(&ctx.env)?, &get_token_suger(&ctx)?).await

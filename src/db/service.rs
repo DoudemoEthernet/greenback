@@ -30,18 +30,23 @@ where
         }
     }
 
-    pub async fn create_task(&self, create: PostTask) -> Result<(), DatabaseError> {
+    pub async fn create_task(
+        &self,
+        create: PostTask,
+        username: Username,
+    ) -> Result<(), DatabaseError> {
         self.task_repository
-            .create(&create.create_task(Username::new("dummy-user".to_string())))
+            .create(&create.create_task(username))
             .await
     }
 
-    pub async fn update_task(&self, update: PatchTask) -> Result<(), DatabaseError> {
+    pub async fn update_task(
+        &self,
+        update: PatchTask,
+        username: &Username,
+    ) -> Result<(), DatabaseError> {
         let original = self.task_repository.get_from_id(&update.id()).await?;
-        let task = update.create_task(
-            original.username().to_owned(),
-            original.created_at().to_owned(),
-        );
+        let task = update.create_task(username.to_owned(), original.created_at().to_owned());
         self.task_repository.update(&task).await
     }
 
