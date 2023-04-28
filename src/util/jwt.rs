@@ -13,7 +13,7 @@ struct Claims {
 }
 
 pub fn create_token(
-    key: &EncodingKey,
+    secret_salt: &str,
     username: &Username,
     exp_hour: i64,
 ) -> jsonwebtoken::errors::Result<String> {
@@ -23,19 +23,19 @@ pub fn create_token(
         sub: username.to_owned().into(),
         exp: usize::try_from(exp).unwrap(),
     };
-    let token = encode(&Header::default(), &claims, key)?;
+    let key = EncodingKey::from_secret(secret_salt.as_ref());
+    let token = encode(&Header::default(), &claims, &key)?;
     Ok(token)
 }
 
-pub fn validate_token(key: &DecodingKey, token: String) -> jsonwebtoken::errors::Result<Username> {
-    let claims = decode::<Claims>(&token, key, &Validation::default())?.claims;
+pub fn validate_token(secret_salt: &str, token: String) -> jsonwebtoken::errors::Result<Username> {
+    let key = DecodingKey::from_secret(secret_salt.as_ref());
+    let claims = decode::<Claims>(&token, &key, &Validation::default())?.claims;
     Ok(Username::new(claims.sub))
 }
 
 #[cfg(test)]
 mod test {
-    use jsonwebtoken::{DecodingKey, EncodingKey};
-
     use crate::{db::entity::account::Username, util::jwt::validate_token};
 
     use super::create_token;
@@ -44,15 +44,13 @@ mod test {
     fn token_test() {
         let username = Username::new("test_user".to_string());
         let key = "secret";
-        let encoding_key = EncodingKey::from_secret(key.as_ref());
-        let decoding_key = DecodingKey::from_secret(key.as_ref());
-        let token = create_token(&encoding_key, &username, 6).unwrap();
-        let validated_user = validate_token(&decoding_key, token).unwrap();
+        let token = create_token(key, &username, 6).unwrap();
+        let validated_user = validate_token(key, token).unwrap();
 
         assert_eq!(username, validated_user);
 
-        let invalid_token = create_token(&encoding_key, &username, -1).unwrap();
-        if validate_token(&decoding_key, invalid_token).is_ok() {
+        let invalid_token = create_token(key, &username, -1).unwrap();
+        if validate_token(key, invalid_token).is_ok() {
             panic!("invalid_token is valid token");
         }
     }
