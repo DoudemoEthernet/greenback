@@ -25,6 +25,10 @@ fn get_service(env: &Env) -> Result<Service<D1TaskDatabase, D1AccountDatabase>> 
         .map(|(db, db2)| Service::new(D1TaskDatabase::new(db), D1AccountDatabase::new(db2)))
 }
 
+fn get_token_suger(context: &RouteContext<()>) -> worker::Result<String> {
+    context.secret("token_sugar").map(|s| s.to_string())
+}
+
 #[event(fetch)]
 pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Response> {
     log_request(&req);
@@ -55,10 +59,10 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
             delete_task(&ctx, &get_service(&ctx.env)?).await
         })
         .post_async("/account/signup", |req, ctx| async move {
-            create_account(req, &get_service(&ctx.env)?).await
+            create_account(req, &get_service(&ctx.env)?, &get_token_suger(&ctx)?).await
         })
         .post_async("/account/login", |req, ctx| async move {
-            login(req, &get_service(&ctx.env)?).await
+            login(req, &get_service(&ctx.env)?, &get_token_suger(&ctx)?).await
         })
         .run(req, env)
         .await

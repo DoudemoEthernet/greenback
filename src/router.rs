@@ -1,3 +1,5 @@
+use serde::Serialize;
+use time::{Duration, OffsetDateTime};
 use worker::{console_error, Request, Response, RouteContext};
 
 use crate::{
@@ -10,8 +12,17 @@ use crate::{
         repository::{account::CredentialRepository, task::TaskRepository},
         service::Service,
     },
-    util::task::{PatchTask, PostTask, ResponseTask},
+    util::{
+        jwt::create_token,
+        task::{PatchTask, PostTask, ResponseTask},
+    },
 };
+
+#[derive(Debug, Serialize)]
+struct TokenProvider {
+    token: String,
+    expr: i64,
+}
 
 pub async fn post_task<TRepository: TaskRepository, CRepository: CredentialRepository>(
     mut request: Request,
@@ -110,23 +121,48 @@ pub async fn delete_task<TRepository: TaskRepository, CRepository: CredentialRep
 pub async fn create_account<TRepository: TaskRepository, CRepository: CredentialRepository>(
     mut request: Request,
     service: &Service<TRepository, CRepository>,
+    token_sugar: &str,
 ) -> worker::Result<Response> {
     let data: Credential = request.json().await?;
-    service.create_credential(data).await.map_or_else(
-        |e| match e {
-            DatabaseError::TransactionError(e) => {
-                console_error!("failed to create credential: {e}");
-                Response::error("Internal error", 500)
-            }
-            _ => Response::error("Unknown error", 500),
-        },
-        |_| Response::ok(""),
-    )
+    service
+        .create_credential(&data)
+        .await
+        .map(|_| {
+            let expr_hour = 6;
+            let expr = (OffsetDateTime::now_utc() + Duration::hours(expr_hour)).unix_timestamp();
+            create_token(token_sugar, &data.username(), expr_hour)
+                .map_err(|e| {
+                    console_error!("failed to create token: {e}");
+                    Response::error("Internal error", 500)
+                })
+                .map(|token| TokenProvider { token, expr })
+                .map(|provider| {
+                    serde_json::to_string(&provider).map_or_else(
+                        |e| {
+                            console_error!("failed to encode provider: {e}");
+                            Response::error("Internal error", 500)
+                        },
+                        |r| Response::from_json(&r),
+                    )
+                })
+                .map_or_else(|e| e, |r| r)
+        })
+        .map_or_else(
+            |e| match e {
+                DatabaseError::TransactionError(e) => {
+                    console_error!("failed to create credential: {e}");
+                    Response::error("Internal error", 500)
+                }
+                _ => Response::error("Unknown error", 500),
+            },
+            |_| Response::ok(""),
+        )
 }
 
 pub async fn login<TRepository: TaskRepository, CRepository: CredentialRepository>(
     mut request: Request,
     service: &Service<TRepository, CRepository>,
+    token_sugar: &str,
 ) -> worker::Result<Response> {
     let data: Credential = request.json().await?;
     service
@@ -134,7 +170,25 @@ pub async fn login<TRepository: TaskRepository, CRepository: CredentialRepositor
         .await
         .map(|credential| {
             if credential.password() == data.password() {
-                Response::ok("")
+                let expr_hour = 6;
+                let expr =
+                    (OffsetDateTime::now_utc() + Duration::hours(expr_hour)).unix_timestamp();
+                create_token(token_sugar, &data.username(), expr_hour)
+                    .map_err(|e| {
+                        console_error!("failed to create token: {e}");
+                        Response::error("Internal error", 500)
+                    })
+                    .map(|token| TokenProvider { token, expr })
+                    .map(|provider| {
+                        serde_json::to_string(&provider).map_or_else(
+                            |e| {
+                                console_error!("failed to encode provider: {e}");
+                                Response::error("Internal error", 500)
+                            },
+                            |r| Response::from_json(&r),
+                        )
+                    })
+                    .map_or_else(|e| e, |r| r)
             } else {
                 Response::error("Bad request", 400)
             }

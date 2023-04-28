@@ -53,8 +53,8 @@ where
         self.task_repository.get_from_account(&username).await
     }
 
-    pub async fn create_credential(&self, create: Credential) -> Result<(), DatabaseError> {
-        self.credential_repository.create(&create).await
+    pub async fn create_credential(&self, create: &Credential) -> Result<(), DatabaseError> {
+        self.credential_repository.create(create).await
     }
 
     pub async fn get_credential(&self, username: Username) -> Result<Credential, DatabaseError> {
