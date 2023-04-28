@@ -2,7 +2,7 @@ use db::{
     app::{account::D1AccountDatabase, task::D1TaskDatabase},
     service::Service,
 };
-use router::{delete_task, get_task, patch_task, post_task};
+use router::{delete_task, get_task, patch_task, post_task, create_account, login};
 use worker::*;
 
 mod db;
@@ -53,6 +53,12 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
         })
         .delete_async("/task/:id", |_, ctx| async move {
             delete_task(&ctx, &get_service(&ctx.env)?).await
+        })
+        .post_async("/account/signup", |req, ctx| async move {
+            create_account(req, &get_service(&ctx.env)?).await
+        })
+        .post_async("/account/login", |req, ctx| async move {
+            login(req, &get_service(&ctx.env)?).await
         })
         .run(req, env)
         .await
