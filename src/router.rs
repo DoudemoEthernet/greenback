@@ -1,4 +1,4 @@
-use worker::{console_error, Request, Response, RouteContext};
+use worker::{console_error, Headers, Request, Response, RouteContext};
 
 use crate::{
     db::{
@@ -55,7 +55,15 @@ pub async fn get_task<Repository: TaskRepository>(
                     console_error!("faield to parse ResponseTask to Json: {e}");
                     Response::error("unknown error", 500)
                 },
-                |json| Response::from_json(&json),
+                |json| match Response::from_json(&json) {
+                    Ok(res) => {
+                        let mut header = Headers::new();
+                        header.append("Access-Control-Allow-Origin", "*")?;
+                        let res = res.with_headers(header);
+                        Ok(res)
+                    }
+                    Err(e) => Err(e),
+                },
             )
         })
         .map_or_else(|e| e, |r| r)
