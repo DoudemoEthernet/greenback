@@ -40,6 +40,7 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
         .post_async("/task", |req, ctx| async move {
             post_task(req, &get_service(&ctx.env)?).await
         })
+        .options("/task", |_, _| Response::ok(""))
         .get_async("/task", |_, ctx| async move {
             get_task(&get_service(&ctx.env)?).await
         })
@@ -49,6 +50,7 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
         .delete_async("/task/:id", |_, ctx| async move {
             delete_task(&ctx, &get_service(&ctx.env)?).await
         })
+        .options("/task/:id", |_, _| Response::ok(""))
         .run(req, env)
         .await
 }
