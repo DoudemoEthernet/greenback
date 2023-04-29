@@ -1,4 +1,4 @@
-use worker::{console_error, Request, Response, RouteContext};
+use worker::{console_error, Headers, Request, Response, RouteContext};
 
 use crate::{
     db::{
@@ -10,22 +10,38 @@ use crate::{
     util::task::{PatchTask, PostTask, ResponseTask},
 };
 
+trait BasicHeader {
+    fn append_header(self) -> Self;
+}
+
+impl BasicHeader for worker::Result<Response> {
+    fn append_header(self) -> worker::Result<Response> {
+        let mut headers = Headers::new();
+        headers.append("Access-Control-Allow-Origin", "*")?;
+        self.map(|res| res.with_headers(headers))
+    }
+}
+
 pub async fn post_task<Repository: TaskRepository>(
     mut request: Request,
     service: &Service<Repository>,
 ) -> worker::Result<Response> {
     let data: PostTask = request.json().await?;
-    service.create_task(data).await.map_or_else(
-        |e| match e {
-            DatabaseError::TransactionError(e) => {
-                let message = "Failed to post task";
-                console_error!("{message}: {e}");
-                Response::error(message, 500)
-            }
-            _ => Response::error("unknown error", 500),
-        },
-        |_| Response::ok(""),
-    )
+    service
+        .create_task(data)
+        .await
+        .map_or_else(
+            |e| match e {
+                DatabaseError::TransactionError(e) => {
+                    let message = "Failed to post task";
+                    console_error!("{message}: {e}");
+                    Response::error(message, 500)
+                }
+                _ => Response::error("unknown error", 500),
+            },
+            |_| Response::ok(""),
+        )
+        .append_header()
 }
 
 pub async fn get_task<Repository: TaskRepository>(
@@ -59,6 +75,7 @@ pub async fn get_task<Repository: TaskRepository>(
             )
         })
         .map_or_else(|e| e, |r| r)
+        .append_header()
 }
 
 pub async fn patch_task<Repository: TaskRepository>(
@@ -66,16 +83,20 @@ pub async fn patch_task<Repository: TaskRepository>(
     service: &Service<Repository>,
 ) -> worker::Result<Response> {
     let data: PatchTask = request.json().await?;
-    service.update_task(data).await.map_or_else(
-        |e| match e {
-            DatabaseError::TransactionError(e) => {
-                console_error!("faled to update task: {e}");
-                Response::error("Internal error", 500)
-            }
-            _ => Response::error("Unknown error", 500),
-        },
-        |_| Response::ok(""),
-    )
+    service
+        .update_task(data)
+        .await
+        .map_or_else(
+            |e| match e {
+                DatabaseError::TransactionError(e) => {
+                    console_error!("faled to update task: {e}");
+                    Response::error("Internal error", 500)
+                }
+                _ => Response::error("Unknown error", 500),
+            },
+            |_| Response::ok(""),
+        )
+        .append_header()
 }
 
 pub async fn delete_task<Repository: TaskRepository>(
@@ -99,7 +120,8 @@ pub async fn delete_task<Repository: TaskRepository>(
                     }
                 })
                 .map_or_else(|e| e, |_| Response::ok("success")),
-        };
+        }
+        .append_header();
     };
-    Response::error("bad request", 400)
+    Response::error("bad request", 400).append_header()
 }
