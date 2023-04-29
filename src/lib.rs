@@ -51,6 +51,7 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
         })
         .get_async("/task", |req, ctx| async move {
             get_task(req, &get_service(&ctx.env)?, &get_token_suger(&ctx)?).await
+        .options("/task", |_, _| Response::ok(""))
         })
         .patch_async("/task", |req, ctx| async move {
             patch_task(req, &get_service(&ctx.env)?, &get_token_suger(&ctx)?).await
@@ -64,6 +65,7 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
         .post_async("/account/login", |req, ctx| async move {
             login(req, &get_service(&ctx.env)?, &get_token_suger(&ctx)?).await
         })
+        .options("/task/:id", |_, _| Response::ok(""))
         .run(req, env)
         .await
 }
