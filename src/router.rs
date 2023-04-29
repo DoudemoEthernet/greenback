@@ -10,7 +10,7 @@ use crate::{
     util::task::{PatchTask, PostTask, ResponseTask},
 };
 
-trait BasicHeader {
+pub trait BasicHeader {
     fn append_header(self) -> Self;
 }
 

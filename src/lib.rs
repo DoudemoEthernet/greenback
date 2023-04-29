@@ -1,5 +1,5 @@
 use db::{app::task::D1TaskDatabase, service::Service};
-use router::{delete_task, get_task, patch_task, post_task};
+use router::{delete_task, get_task, patch_task, post_task, BasicHeader};
 use worker::*;
 
 mod db;
@@ -36,11 +36,11 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
     // functionality and a `RouteContext` which you can use to  and get route parameters and
     // Environment bindings like KV Stores, Durable Objects, Secrets, and Variables.
     router
-        .get("/", |_, _| Response::ok("Hello from Workers!"))
+        .get("/", |_, _| Response::ok("Hello from Workers!").append_header())
         .post_async("/task", |req, ctx| async move {
             post_task(req, &get_service(&ctx.env)?).await
         })
-        .options("/task", |_, _| Response::ok(""))
+        .options("/task", |_, _| Response::ok("").append_header())
         .get_async("/task", |_, ctx| async move {
             get_task(&get_service(&ctx.env)?).await
         })
@@ -50,7 +50,7 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
         .delete_async("/task/:id", |_, ctx| async move {
             delete_task(&ctx, &get_service(&ctx.env)?).await
         })
-        .options("/task/:id", |_, _| Response::ok(""))
+        .options("/task/:id", |_, _| Response::ok("").append_header())
         .run(req, env)
         .await
 }
