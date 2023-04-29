@@ -19,6 +19,7 @@ impl BasicHeader for worker::Result<Response> {
         let mut headers = Headers::new();
         headers.append("Access-Control-Allow-Origin", "*")?;
         headers.append("Access-Control-Allow-Methods", "POST, PATCH, DLETE")?;
+        headers.append("Acess-Control-Allow-Headers", "*")?;
         self.map(|res| res.with_headers(headers))
     }
 }
