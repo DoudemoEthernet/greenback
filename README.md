@@ -43,6 +43,26 @@ TASKS {
 CREDENTIALS ||--o{ TASKS: contains
 ```
 
+```mermaid
+flowchart TD
+
+	subgraph Github
+		repof[フロントエンド リポシトリ]
+		repob[バックエンドリ ポジトリ]
+	end
+	subgraph Cloudflare
+		subgraph Pages
+			front[フロントエンド jtdi.doudemoether.net]
+		end
+		subgraph Workers
+			back[バックエンド greenback.doudemoether.net]
+		end
+		front<-->|RestAPI|back
+	end
+	repof-->|deploy|front
+	repob-->|deploy|back
+```
+
 ## For Developpers
 
 use `nix develop` or setup wrangler/rust manually
