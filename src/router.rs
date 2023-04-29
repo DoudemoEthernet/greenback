@@ -35,6 +35,18 @@ impl HeaderTokenGetter for Headers {
     }
 }
 
+trait BasicHeader {
+    fn append_header(self) -> Self;
+}
+
+impl BasicHeader for worker::Result<Response> {
+    fn append_header(self) -> worker::Result<Response> {
+        let mut headers = Headers::new();
+        headers.append("Access-Control-Allow-Origin", "*")?;
+        self.map(|res| res.with_headers(headers))
+    }
+}
+
 pub async fn post_task<TRepository: TaskRepository, CRepository: CredentialRepository>(
     mut request: Request,
     service: &Service<TRepository, CRepository>,
@@ -67,7 +79,7 @@ pub async fn post_task<TRepository: TaskRepository, CRepository: CredentialRepos
             },
         },
         None => Response::error("token not found", 404),
-    }
+    }.append_header()
 }
 
 pub async fn get_task<TRepository: TaskRepository, CRepository: CredentialRepository>(
@@ -118,7 +130,7 @@ pub async fn get_task<TRepository: TaskRepository, CRepository: CredentialReposi
             },
         },
         None => Response::error("token not found", 404),
-    }
+    }.append_header()
 }
 
 pub async fn patch_task<TRepository: TaskRepository, CRepository: CredentialRepository>(
@@ -152,7 +164,7 @@ pub async fn patch_task<TRepository: TaskRepository, CRepository: CredentialRepo
             },
         },
         None => Response::error("token not found", 404),
-    }
+    }.append_header()
 }
 
 pub async fn delete_task<TRepository: TaskRepository, CRepository: CredentialRepository>(
@@ -203,7 +215,7 @@ pub async fn delete_task<TRepository: TaskRepository, CRepository: CredentialRep
             },
         },
         None => Response::error("token not found", 404),
-    }
+    }.append_header()
 }
 
 pub async fn create_account<TRepository: TaskRepository, CRepository: CredentialRepository>(
@@ -244,7 +256,7 @@ pub async fn create_account<TRepository: TaskRepository, CRepository: Credential
                 _ => Response::error("Unknown error", 500),
             },
             |_| Response::ok(""),
-        )
+        ).append_header()
 }
 
 pub async fn login<TRepository: TaskRepository, CRepository: CredentialRepository>(
@@ -290,5 +302,5 @@ pub async fn login<TRepository: TaskRepository, CRepository: CredentialRepositor
                 DatabaseError::NotFound(_) => Response::error("not found", 404),
             },
             |r| r,
-        )
+        ).append_header()
 }
