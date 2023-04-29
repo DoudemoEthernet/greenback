@@ -1,4 +1,4 @@
-use std::{str::FromStr, sync::Arc};
+use std::str::FromStr;
 
 use async_trait::async_trait;
 use serde::Deserialize;
@@ -8,12 +8,14 @@ use worker::Database;
 
 use crate::db::{
     entity::{
-        account::AccountId,
+        account::Username,
         task::{Task, TaskId},
     },
     error::DatabaseError,
     repository::task::TaskRepository,
 };
+
+use super::DatabaseWrapper;
 
 pub struct D1TaskDatabase {
     pub db: DatabaseWrapper,
@@ -22,18 +24,15 @@ pub struct D1TaskDatabase {
 impl D1TaskDatabase {
     pub fn new(database: Database) -> Self {
         Self {
-            db: DatabaseWrapper(Arc::new(database)),
+            db: DatabaseWrapper::new(database),
         }
     }
 }
 
-#[derive(Clone)]
-pub struct DatabaseWrapper(Arc<Database>);
-
 #[derive(Debug, Deserialize)]
 struct InternalData {
     id: String,
-    account_id: i64,
+    username: String,
     title: String,
     description: String,
     difficulty: i64,
@@ -44,7 +43,7 @@ impl InternalData {
     fn to_task(&self) -> Task {
         Task::new(
             Uuid::from_str(&self.id).unwrap(),
-            self.account_id,
+            self.username.to_owned(),
             self.title.to_owned(),
             self.description.to_owned(),
             self.difficulty as i8,
@@ -63,7 +62,7 @@ impl TaskRepository for D1TaskDatabase {
             .prepare(query)
             .bind(&[
                 create.id().as_ref().to_string().into(),
-                create.account().as_ref().to_string().into(),
+                create.username().as_ref().into(),
                 create.title().as_ref().into(),
                 create.description().as_ref().into(),
                 create.difficulty().as_ref().to_string().into(),
@@ -105,13 +104,13 @@ impl TaskRepository for D1TaskDatabase {
         Ok(())
     }
 
-    async fn get_from_account(&self, account_id: &AccountId) -> Result<Vec<Task>, DatabaseError> {
+    async fn get_from_account(&self, username: &Username) -> Result<Vec<Task>, DatabaseError> {
         let query = "SELECT * FROM tasks WHERE account_id = ? order by created_at desc;";
         let queue = self
             .db
             .0
             .prepare(query)
-            .bind(&[account_id.as_ref().to_string().into()])
+            .bind(&[username.as_ref().to_string().into()])
             .map_err(DatabaseError::TransactionError)?;
         queue
             .all()

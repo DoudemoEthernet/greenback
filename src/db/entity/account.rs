@@ -1,30 +1,66 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Serialize, Deserialize)]
-pub struct AccountId(i64);
+#[derive(Debug, Clone, Hash, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Username(String);
 
-impl From<AccountId> for i64 {
-    fn from(value: AccountId) -> Self {
+impl From<Username> for String {
+    fn from(value: Username) -> Self {
         value.0
     }
 }
 
-impl AsRef<i64> for AccountId {
-    fn as_ref(&self) -> &i64 {
+impl AsRef<str> for Username {
+    fn as_ref(&self) -> &str {
         &self.0
     }
 }
 
-impl AccountId {
-    pub fn new(id: impl Into<i64>) -> Self {
-        Self(id.into())
+impl Username {
+    pub fn new(username: String) -> Self {
+        Self(username)
     }
 }
 
-impl Default for AccountId {
-    fn default() -> Self {
-        use rand::Rng;
-        let gen = rand::thread_rng().gen_range(1000_0000_0000_0000..=9999_9999_9999_9999);
-        Self(gen)
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Password(String);
+
+impl From<Password> for String {
+    fn from(value: Password) -> Self {
+        value.0
+    }
+}
+
+impl AsRef<str> for Password {
+    fn as_ref(&self) -> &str {
+        &self.0
+    }
+}
+
+impl Password {
+    pub fn new(password: String) -> Self {
+        Self(password)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Credential {
+    username: Username,
+    password: Password,
+}
+
+impl Credential {
+    pub fn new(username: impl Into<String>, password: impl Into<String>) -> Self {
+        Self {
+            username: Username::new(username.into()),
+            password: Password::new(password.into()),
+        }
+    }
+
+    pub fn username(&self) -> Username {
+        self.username.to_owned()
+    }
+
+    pub fn password(&self) -> Password {
+        self.password.to_owned()
     }
 }

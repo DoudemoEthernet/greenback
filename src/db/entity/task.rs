@@ -4,7 +4,7 @@ use uuid::Uuid;
 
 use crate::util::string::{TryFromStringError, TryFromStringErrorKind};
 
-use super::{account::AccountId, time::CreatedAt};
+use super::{account::Username, time::CreatedAt};
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TaskId(Uuid);
@@ -110,7 +110,7 @@ impl Diffuculty {
 #[derive(Debug, Clone, Hash, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Task {
     id: TaskId,
-    account: AccountId,
+    username: Username,
     title: Title,
     description: Description,
     difficulty: Diffuculty,
@@ -120,7 +120,7 @@ pub struct Task {
 impl Task {
     pub fn new(
         id: impl Into<Uuid>,
-        account: impl Into<i64>,
+        username: impl Into<String>,
         title: impl Into<String>,
         description: impl Into<String>,
         difficulty: impl Into<i8>,
@@ -128,7 +128,7 @@ impl Task {
     ) -> Self {
         Self {
             id: TaskId::new(id.into()),
-            account: AccountId::new(account.into()),
+            username: Username::new(username.into()),
             title: Title::new(title.into()),
             description: Description::new(description.into()),
             difficulty: Diffuculty::new(difficulty.into()),
@@ -140,8 +140,8 @@ impl Task {
         &self.id
     }
 
-    pub fn account(&self) -> &AccountId {
-        &self.account
+    pub fn username(&self) -> &Username {
+        &self.username
     }
 
     pub fn title(&self) -> &Title {

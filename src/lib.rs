@@ -1,5 +1,8 @@
-use db::{app::task::D1TaskDatabase, service::Service};
-use router::{delete_task, get_task, patch_task, post_task};
+use db::{
+    app::{account::D1AccountDatabase, task::D1TaskDatabase},
+    service::Service,
+};
+use router::{create_account, delete_task, get_task, login, patch_task, post_task};
 use worker::*;
 
 mod db;
@@ -16,8 +19,14 @@ fn log_request(req: &Request) {
     );
 }
 
-fn get_service(env: &Env) -> Result<Service<D1TaskDatabase>> {
-    env.d1("DB").map(|db| Service::new(D1TaskDatabase::new(db)))
+fn get_service(env: &Env) -> Result<Service<D1TaskDatabase, D1AccountDatabase>> {
+    env.d1("DB")
+        .and_then(|db| env.d1("DB").map(|db2| (db, db2)))
+        .map(|(db, db2)| Service::new(D1TaskDatabase::new(db), D1AccountDatabase::new(db2)))
+}
+
+fn get_token_suger(context: &RouteContext<()>) -> worker::Result<String> {
+    context.secret("token_sugar").map(|s| s.to_string())
 }
 
 #[event(fetch)]
@@ -38,17 +47,23 @@ pub async fn main(req: Request, env: Env, _ctx: worker::Context) -> Result<Respo
     router
         .get("/", |_, _| Response::ok("Hello from Workers!"))
         .post_async("/task", |req, ctx| async move {
-            post_task(req, &get_service(&ctx.env)?).await
+            post_task(req, &get_service(&ctx.env)?, &get_token_suger(&ctx)?).await
         })
+        .get_async("/task", |req, ctx| async move {
+            get_task(req, &get_service(&ctx.env)?, &get_token_suger(&ctx)?).await
         .options("/task", |_, _| Response::ok(""))
-        .get_async("/task", |_, ctx| async move {
-            get_task(&get_service(&ctx.env)?).await
         })
         .patch_async("/task", |req, ctx| async move {
-            patch_task(req, &get_service(&ctx.env)?).await
+            patch_task(req, &get_service(&ctx.env)?, &get_token_suger(&ctx)?).await
         })
-        .delete_async("/task/:id", |_, ctx| async move {
-            delete_task(&ctx, &get_service(&ctx.env)?).await
+        .delete_async("/task/:id", |req, ctx| async move {
+            delete_task(req, &ctx, &get_service(&ctx.env)?, &get_token_suger(&ctx)?).await
+        })
+        .post_async("/account/signup", |req, ctx| async move {
+            create_account(req, &get_service(&ctx.env)?, &get_token_suger(&ctx)?).await
+        })
+        .post_async("/account/login", |req, ctx| async move {
+            login(req, &get_service(&ctx.env)?, &get_token_suger(&ctx)?).await
         })
         .options("/task/:id", |_, _| Response::ok(""))
         .run(req, env)
